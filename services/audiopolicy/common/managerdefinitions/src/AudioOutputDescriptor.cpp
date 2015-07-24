@@ -40,7 +40,7 @@ static const DeviceTypeSet& getAllOutRemoteDevices() {
 
 AudioOutputDescriptor::AudioOutputDescriptor(const sp<PolicyAudioPort>& policyAudioPort,
                                              AudioPolicyClientInterface *clientInterface)
-    : mPolicyAudioPort(policyAudioPort), mClientInterface(clientInterface)
+    : mIoHandle(AUDIO_IO_HANDLE_NONE), mPolicyAudioPort(policyAudioPort), mClientInterface(clientInterface)
 {
     if (mPolicyAudioPort.get() != nullptr) {
         mPolicyAudioPort->pickAudioProfile(mSamplingRate, mChannelMask, mFormat);

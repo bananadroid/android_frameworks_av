@@ -142,6 +142,8 @@ private:
     VolumeGroupMap mVolumeGroups;
     LastRemovableMediaDevices mLastRemovableMediaDevices;
     audio_mode_t mPhoneState = AUDIO_MODE_NORMAL;  /**< current phone state. */
+    /* if display-port is connected and can be used for voip/voice */
+    bool mDpConnAndAllowedForVoice;
 
     /* if display-port is connected and can be used for voip/voice */
     bool mDpConnAndAllowedForVoice = false;

@@ -506,7 +506,7 @@ protected:
         // when a device is disconnected, checks if an output is not used any more and
         // returns its handle if any.
         // transfers the audio tracks and effects from one output thread to another accordingly.
-        status_t checkOutputsForDevice(const sp<DeviceDescriptor>& device,
+        virtual status_t checkOutputsForDevice(const sp<DeviceDescriptor>& device,
                                        audio_policy_dev_state_t state,
                                        SortedVector<audio_io_handle_t>& outputs);
 
@@ -787,7 +787,7 @@ protected:
         std::unordered_set<audio_format_t> mManualSurroundFormats;
 
         std::unordered_map<uid_t, audio_flags_mask_t> mAllowedCapturePolicies;
-private:
+protected:
         void onNewAudioModulesAvailableInt(DeviceVector *newDevices);
 
 protected:

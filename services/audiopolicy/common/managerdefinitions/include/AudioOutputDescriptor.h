@@ -307,6 +307,7 @@ public:
 
     DeviceVector mDevices; /**< current devices this output is routed to */
     wp<AudioPolicyMix> mPolicyMix;  // non NULL when used by a dynamic policy
+    audio_io_handle_t mIoHandle;           // output handle
 
 protected:
     const sp<PolicyAudioPort> mPolicyAudioPort;
