@@ -21,6 +21,7 @@ cc_library_shared {
     defaults: [
         "qti_camera_device_defaults",
         "camera_needs_client_info_defaults",
+        "needs_camera_boottime",
     ],
 
     // Camera service source
