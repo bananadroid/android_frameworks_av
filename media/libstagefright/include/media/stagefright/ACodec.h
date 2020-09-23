@@ -150,6 +150,7 @@ protected:
         kWhatReleaseCodecInstance    = 'relC',
         kWhatForceStateTransition    = 'fstt',
         kWhatCheckIfStuck            = 'Cstk',
+        kWhatSubmitExtraOutputMetadataBuffer = 'sbxo',
     };
 
     enum {
@@ -277,6 +278,7 @@ protected:
     bool mShutdownInProgress;
     bool mExplicitShutdown;
     bool mIsLegacyVP9Decoder;
+    bool mIsLowLatency;
 
     // If "mKeepComponentAllocated" we only transition back to Loaded state
     // and do not release the component instance.
