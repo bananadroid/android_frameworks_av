@@ -1115,6 +1115,8 @@ void AudioFlinger::EffectModule::addEffectToHal_l()
 // start() must be called with PlaybackThread::mLock or EffectChain::mLock held
 status_t AudioFlinger::EffectModule::start()
 {
+    // set volume before enabling an effect
+    getCallback()->resetVolume();
     status_t status;
     {
         Mutex::Autolock _l(mLock);
