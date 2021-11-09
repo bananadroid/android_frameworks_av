@@ -735,6 +735,13 @@ status_t C2SoftVpxDec::outputBuffer(
 
     C2MemoryUsage usage = { C2MemoryUsage::CPU_READ, C2MemoryUsage::CPU_WRITE };
     c2_status_t err = pool->fetchGraphicBlock(align(mWidth, 16), mHeight, format, usage, &block);
+
+    if (err != C2_OK && format == HAL_PIXEL_FORMAT_RGBA_1010102) {
+        // Fallback to YV12
+        format = HAL_PIXEL_FORMAT_YV12;
+        err = pool->fetchGraphicBlock(align(mWidth, 16), mHeight, format, usage, &block);
+    }
+
     if (err != C2_OK) {
         ALOGE("fetchGraphicBlock for Output failed with status %d", err);
         work->result = err;
