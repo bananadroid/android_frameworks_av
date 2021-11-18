@@ -383,6 +383,7 @@ private:
 
     uint64_t mLastInputBufferAvailableTs;
     std::mutex mTsLock;
+    bool mIsHWDecoder;
 
     // whether the HAL needs a dummy work
     bool mNeedEmptyWork;
