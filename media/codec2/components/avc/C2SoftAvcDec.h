@@ -135,6 +135,7 @@ private:
     status_t resetDecoder();
     void resetPlugin();
     status_t deleteDecoder();
+    void getHDRStaticParams(ivd_video_decode_op_t *ps_decode_op);
 
     std::shared_ptr<IntfImpl> mIntf;
 
@@ -179,6 +180,34 @@ private:
         }
     } mBitstreamColorAspects;
 
+    struct HDRStaticInfo {
+        float redx;
+        float redy;
+        float greenx;
+        float greeny;
+        float bluex;
+        float bluey;
+        float whitex;
+        float whitey;
+        float maxLuminance;
+        float minLuminance;
+        float maxCll;
+        float maxFall;
+
+        // default color aspects
+        HDRStaticInfo()
+            : redx(0), redy(0), greenx(0), greeny(0), bluex(0), bluey(0), whitex(0), whitey(0),
+              maxLuminance(0), minLuminance(0), maxCll(0), maxFall(0) { }
+
+        bool operator==(const HDRStaticInfo &o) {
+            return redx == o.redx && redy == o.redy && greenx == o.greenx && greeny == o.greeny
+                   && bluex == o.bluex && bluey == o.bluey && whitex == o.whitex
+                   && whitey == o.whitey && maxLuminance == o.maxLuminance
+                   && minLuminance == o.minLuminance && maxCll == o.maxCll && maxFall == o.maxFall;
+        }
+    } mHdrStaticInfo;
+    bool getMDCV(HDRStaticInfo *hdrStaticInfo);
+    bool getCLL(HDRStaticInfo *hdrStaticInfo);
     // profile
     nsecs_t mTimeStart = 0;
     nsecs_t mTimeEnd = 0;

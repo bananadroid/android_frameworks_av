@@ -16,6 +16,7 @@
 
 //#define LOG_NDEBUG 0
 #define LOG_TAG "C2SoftAvcEnc"
+#include <inttypes.h>
 #include <log/log.h>
 #include <utils/misc.h>
 
@@ -35,7 +36,6 @@
 #include <util/C2InterfaceHelper.h>
 
 #include "C2SoftAvcEnc.h"
-#include "ih264e.h"
 #include "ih264e_error.h"
 
 namespace android {
@@ -250,6 +250,29 @@ public:
                 })
                 .withSetter(CodedColorAspectsSetter, mColorAspects)
                 .build());
+
+        // default BT.2020 static info
+        C2HdrStaticMetadataStruct defaultStaticInfo{};
+        helper->addStructDescriptors<C2ColorXyStruct, C2MasteringDisplayColorVolumeStruct>();
+        addParameter(
+                DefineParam(mHdrStaticInfo, C2_PARAMKEY_HDR_STATIC_INFO)
+                .withDefault(new C2StreamHdrStaticInfo::input(0u, defaultStaticInfo))
+                .withFields({
+                    C2F(mHdrStaticInfo, mastering.red.x).inRange(0, 1),
+                    C2F(mHdrStaticInfo, mastering.red.y).inRange(0, 1),
+                    C2F(mHdrStaticInfo, mastering.green.x).inRange(0, 1),
+                    C2F(mHdrStaticInfo, mastering.green.y).inRange(0, 1),
+                    C2F(mHdrStaticInfo, mastering.blue.x).inRange(0, 1),
+                    C2F(mHdrStaticInfo, mastering.blue.y).inRange(0, 1),
+                    C2F(mHdrStaticInfo, mastering.white.x).inRange(0, 1),
+                    C2F(mHdrStaticInfo, mastering.white.x).inRange(0, 1),
+                    C2F(mHdrStaticInfo, mastering.maxLuminance).inRange(0, 65535),
+                    C2F(mHdrStaticInfo, mastering.minLuminance).inRange(0, 6.5535),
+                    C2F(mHdrStaticInfo, maxCll).inRange(0, 0XFFFF),
+                    C2F(mHdrStaticInfo, maxFall).inRange(0, 0XFFFF)
+                })
+                .withSetter(HdrStaticInfoSetter)
+                .build());
     }
 
     static C2R InputDelaySetter(
@@ -286,6 +309,49 @@ public:
             me.set().height = oldMe.v.height;
         }
         return res;
+    }
+
+    static C2R HdrStaticInfoSetter(
+        bool mayBlock,
+        C2P<C2StreamHdrStaticInfo::input> &me) {
+        (void)mayBlock;
+        if (me.v.mastering.red.x > 1) {
+            me.set().mastering.red.x = 1;
+        }
+        if (me.v.mastering.red.y > 1) {
+            me.set().mastering.red.y = 1;
+        }
+        if (me.v.mastering.green.x > 1) {
+            me.set().mastering.green.x = 1;
+        }
+        if (me.v.mastering.green.y > 1) {
+            me.set().mastering.green.y = 1;
+        }
+        if (me.v.mastering.blue.x > 1) {
+            me.set().mastering.blue.x = 1;
+        }
+        if (me.v.mastering.blue.y > 1) {
+            me.set().mastering.blue.y = 1;
+        }
+        if (me.v.mastering.white.x > 1) {
+            me.set().mastering.white.x = 1;
+        }
+        if (me.v.mastering.white.y > 1) {
+            me.set().mastering.white.y = 1;
+        }
+        if (me.v.mastering.maxLuminance > 65535) {
+            me.set().mastering.maxLuminance = 65535;
+        }
+        if (me.v.mastering.minLuminance > 6.5535) {
+            me.set().mastering.minLuminance = 6.5535;
+        }
+        if (me.v.maxCll > 0XFFFF) {
+            me.set().maxCll = 0XFFFF;
+        }
+        if (me.v.maxFall > 0XFFFF) {
+            me.set().maxFall = 0XFFFF;
+        }
+        return C2R::Ok();
     }
 
     static C2R ProfileLevelSetter(
@@ -530,16 +596,20 @@ public:
 
     // unsafe getters
     std::shared_ptr<C2StreamPictureSizeInfo::input> getSize_l() const { return mSize; }
-    std::shared_ptr<C2StreamIntraRefreshTuning::output> getIntraRefresh_l() const { return mIntraRefresh; }
+    std::shared_ptr<C2StreamIntraRefreshTuning::output> getIntraRefresh_l()
+                                                const { return mIntraRefresh; }
     std::shared_ptr<C2StreamFrameRateInfo::output> getFrameRate_l() const { return mFrameRate; }
     std::shared_ptr<C2StreamBitrateInfo::output> getBitrate_l() const { return mBitrate; }
-    std::shared_ptr<C2StreamRequestSyncFrameTuning::output> getRequestSync_l() const { return mRequestSync; }
+    std::shared_ptr<C2StreamRequestSyncFrameTuning::output> getRequestSync_l()
+                                                  const { return mRequestSync; }
     std::shared_ptr<C2StreamGopTuning::output> getGop_l() const { return mGop; }
     std::shared_ptr<C2StreamPictureQuantizationTuning::output> getPictureQuantization_l() const
     { return mPictureQuantization; }
     std::shared_ptr<C2StreamColorAspectsInfo::output> getCodedColorAspects_l() const {
         return mCodedColorAspects;
     }
+    std::shared_ptr<C2StreamHdrStaticInfo::input> getHdrStaticInfo_l()
+                                                const { return mHdrStaticInfo; }
 
 private:
     std::shared_ptr<C2StreamUsageTuning::input> mUsage;
@@ -554,6 +624,7 @@ private:
     std::shared_ptr<C2StreamPictureQuantizationTuning::output> mPictureQuantization;
     std::shared_ptr<C2StreamColorAspectsInfo::input> mColorAspects;
     std::shared_ptr<C2StreamColorAspectsInfo::output> mCodedColorAspects;
+    std::shared_ptr<C2StreamHdrStaticInfo::input> mHdrStaticInfo;
 };
 
 #define ive_api_function  ih264e_api_function
@@ -1065,6 +1136,98 @@ c2_status_t C2SoftAvcEnc::setDeblockParams() {
     return C2_OK;
 }
 
+void C2SoftAvcEnc::setHdrStaticParams() {
+    // Proceed to set SEI messages to codec
+    // Set mastering display color volume parameters
+    setMDCV();
+    // Set content light level parameters
+    setCLL();
+}
+
+c2_status_t C2SoftAvcEnc::setMDCV() {
+    IV_STATUS_T status;
+    ih264e_ctl_set_sei_mdcv_params_ip_t s_mdcv_ip;
+    ih264e_ctl_set_sei_mdcv_params_op_t s_mdcv_op;
+    memset(&s_mdcv_ip, 0, sizeof(ih264e_ctl_set_sei_mdcv_params_ip_t));
+    memset(&s_mdcv_op, 0, sizeof(ih264e_ctl_set_sei_mdcv_params_op_t));
+
+    s_mdcv_ip.e_cmd = IVE_CMD_VIDEO_CTL;
+    s_mdcv_ip.e_sub_cmd = IVE_CMD_CTL_SET_SEI_MDCV_PARAMS;
+    s_mdcv_ip.u4_size = sizeof(ih264e_ctl_set_sei_mdcv_params_ip_t);
+    s_mdcv_op.u4_size = sizeof(ih264e_ctl_set_sei_mdcv_params_op_t);
+
+    ALOGV("Set MDCV params: mR = (%f, %f), mG = (%f, %f), "
+            "mB = (%f, %f), mW = (%f, %f), maxDL = %f, minDL = %f!",
+            mHdrStaticInfo->mastering.red.x, mHdrStaticInfo->mastering.red.y,
+            mHdrStaticInfo->mastering.green.x, mHdrStaticInfo->mastering.green.y,
+            mHdrStaticInfo->mastering.blue.x, mHdrStaticInfo->mastering.blue.y,
+            mHdrStaticInfo->mastering.white.x, mHdrStaticInfo->mastering.white.y,
+            mHdrStaticInfo->mastering.maxLuminance, mHdrStaticInfo->mastering.minLuminance);
+
+    s_mdcv_ip.u1_sei_mdcv_params_present_flag = 1;
+    s_mdcv_ip.au2_display_primaries_x[0] =
+            mHdrStaticInfo->mastering.green.x / 0.00002 + 0.5;
+    s_mdcv_ip.au2_display_primaries_x[1] =
+            mHdrStaticInfo->mastering.blue.x / 0.00002 + 0.5;
+    s_mdcv_ip.au2_display_primaries_x[2] =
+            mHdrStaticInfo->mastering.red.x / 0.00002 + 0.5;
+    s_mdcv_ip.au2_display_primaries_y[0] =
+            mHdrStaticInfo->mastering.green.y / 0.00002 + 0.5;
+    s_mdcv_ip.au2_display_primaries_y[1] =
+            mHdrStaticInfo->mastering.blue.y / 0.00002 + 0.5;
+    s_mdcv_ip.au2_display_primaries_y[2] =
+            mHdrStaticInfo->mastering.red.y / 0.00002 + 0.5;
+    s_mdcv_ip.u2_white_point_x =
+            mHdrStaticInfo->mastering.white.x / 0.00002 + 0.5;
+    s_mdcv_ip.u2_white_point_y =
+            mHdrStaticInfo->mastering.white.y / 0.00002 + 0.5;
+    s_mdcv_ip.u4_max_display_mastering_luminance =
+            mHdrStaticInfo->mastering.maxLuminance / 0.0001 + 0.5;
+    s_mdcv_ip.u4_min_display_mastering_luminance =
+            mHdrStaticInfo->mastering.minLuminance / 0.0001 + 0.5;
+
+    s_mdcv_ip.u4_timestamp_high = -1;
+    s_mdcv_ip.u4_timestamp_low = -1;
+
+    status = ive_api_function(mCodecCtx, &s_mdcv_ip, &s_mdcv_op);
+    if (status != IV_SUCCESS) {
+        ALOGW("Unable to set MDCV params = 0x%x\n", s_mdcv_op.u4_error_code);
+        return C2_BAD_VALUE;
+    }
+    return C2_OK;
+}
+
+c2_status_t C2SoftAvcEnc::setCLL() {
+    IV_STATUS_T status;
+    ih264e_ctl_set_sei_cll_params_ip_t s_cll_ip;
+    ih264e_ctl_set_sei_cll_params_op_t s_cll_op;
+    memset(&s_cll_ip, 0, sizeof(ih264e_ctl_set_sei_cll_params_ip_t));
+    memset(&s_cll_op, 0, sizeof(ih264e_ctl_set_sei_cll_params_op_t));
+
+    s_cll_ip.e_cmd = IVE_CMD_VIDEO_CTL;
+    s_cll_ip.e_sub_cmd = IVE_CMD_CTL_SET_SEI_CLL_PARAMS;
+    s_cll_ip.u4_size = sizeof(ih264e_ctl_set_sei_cll_params_ip_t);
+    s_cll_op.u4_size = sizeof(ih264e_ctl_set_sei_cll_params_op_t);
+
+    ALOGV("Set CLL params : maxCLL = %f, maxFALL = %f!",
+            mHdrStaticInfo->maxCll,
+            mHdrStaticInfo->maxFall);
+
+    s_cll_ip.u1_sei_cll_params_present_flag = 1;
+    s_cll_ip.u2_max_content_light_level = mHdrStaticInfo->maxCll + 0.5;
+    s_cll_ip.u2_max_pic_average_light_level = mHdrStaticInfo->maxFall + 0.5;
+
+    s_cll_ip.u4_timestamp_high = -1;
+    s_cll_ip.u4_timestamp_low = -1;
+
+    status = ive_api_function(mCodecCtx, &s_cll_ip, &s_cll_op);
+    if (status != IV_SUCCESS) {
+        ALOGW("Unable to set CLL params = 0x%x\n", s_cll_op.u4_error_code);
+        return C2_BAD_VALUE;
+    }
+    return C2_OK;
+}
+
 void C2SoftAvcEnc::logVersion() {
     ive_ctl_getversioninfo_ip_t s_ctl_ip;
     ive_ctl_getversioninfo_op_t s_ctl_op;
@@ -1157,6 +1320,7 @@ c2_status_t C2SoftAvcEnc::initEncoder() {
         mIDRInterval = mIntf->getSyncFramePeriod_l();
         gop = mIntf->getGop_l();
         mColorAspects = mIntf->getCodedColorAspects_l();
+        mHdrStaticInfo = mIntf->getHdrStaticInfo_l();
     }
     if (gop && gop->flexCount() > 0) {
         uint32_t syncInterval = 1;
@@ -1383,6 +1547,9 @@ c2_status_t C2SoftAvcEnc::initEncoder() {
 
     /* Video control Set VUI params */
     setVuiParams();
+
+    /* Video control Set HDR SEI params */
+    setHdrStaticParams();
 
     /* Video control Set in Encode header mode */
     setEncMode(IVE_ENC_MODE_HEADER);
@@ -1726,6 +1893,7 @@ void C2SoftAvcEnc::process(
         std::shared_ptr<C2StreamIntraRefreshTuning::output> intraRefresh = mIntf->getIntraRefresh_l();
         std::shared_ptr<C2StreamBitrateInfo::output> bitrate = mIntf->getBitrate_l();
         std::shared_ptr<C2StreamRequestSyncFrameTuning::output> requestSync = mIntf->getRequestSync_l();
+        std::shared_ptr<C2StreamHdrStaticInfo::input> hdrStaticInfo = mIntf->getHdrStaticInfo_l();
         lock.unlock();
 
         if (bitrate != mBitrate) {
