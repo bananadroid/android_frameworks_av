@@ -67,6 +67,7 @@
 #include "TableXInit.h"
 
 #include <server_configurable_flags/get_flags.h>
+#include "TableXInit.h"
 
 namespace android {
 
