@@ -163,9 +163,8 @@ bool addSupportedProfileLevels(
 
     // If the device doesn't support HDR display, then no codec on the device
     // can advertise support for HDR profiles.
-    // Default to true to maintain backward compatibility
     auto ret = sysprop::SurfaceFlingerProperties::has_HDR_display();
-    bool hasHDRDisplay = ret.has_value() ? *ret : true;
+    bool hasHDRDisplay = ret.has_value() ? *ret : false;
 
     bool added = false;
 
