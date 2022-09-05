@@ -4909,7 +4909,9 @@ status_t AudioFlinger::onTransactWrapper(TransactionCode code,
         case TransactionCode::UPDATE_SECONDARY_OUTPUTS:
         case TransactionCode::SET_BLUETOOTH_VARIABLE_LATENCY_ENABLED:
         case TransactionCode::IS_BLUETOOTH_VARIABLE_LATENCY_ENABLED:
-        case TransactionCode::SUPPORTS_BLUETOOTH_VARIABLE_LATENCY: {
+        case TransactionCode::SUPPORTS_BLUETOOTH_VARIABLE_LATENCY:
+        case TransactionCode::SET_APP_VOLUME:
+        case TransactionCode::SET_APP_MUTE: {
             if (!isServiceUid(IPCThreadState::self()->getCallingUid())) {
                 ALOGW("%s: transaction %d received from PID %d unauthorized UID %d",
                       __func__, static_cast<int>(code),
