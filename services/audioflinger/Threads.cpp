@@ -6447,6 +6447,7 @@ AudioFlinger::PlaybackThread::mixer_state AudioFlinger::DirectOutputThread::prep
             (doHwPause || (mFlushPending && !mHwPaused && (count != 0)))) {
         status_t result = mOutput->stream->pause();
         ALOGE_IF(result != OK, "Error when pausing output stream: %d", result);
+        doHwResume = !doHwPause;  // resume if pause is due to flush.
     }
     if (mFlushPending) {
         flushHw_l();
@@ -7017,6 +7018,7 @@ AudioFlinger::PlaybackThread::mixer_state AudioFlinger::OffloadThread::prepareTr
     if (!mStandby && (doHwPause || (mFlushPending && !mHwPaused && (count != 0)))) {
         status_t result = mOutput->stream->pause();
         ALOGE_IF(result != OK, "Error when pausing output stream: %d", result);
+        doHwResume = !doHwPause;  // resume if pause is due to flush.
     }
     if (mFlushPending) {
         flushHw_l();
