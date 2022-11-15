@@ -192,11 +192,17 @@ void WebmFrameSinkThread::flushFrames(List<const sp<WebmFrame> >& frames, bool l
 }
 
 status_t WebmFrameSinkThread::start() {
+    Mutex::Autolock autoLock(mLock);
+    status_t ret = OK;
     mDone = false;
-    return WebmFrameThread::start();
+    ret = WebmFrameThread::start();
+    mCondition.wait(mLock);
+
+    return ret;
 }
 
 status_t WebmFrameSinkThread::stop() {
+    Mutex::Autolock autoLock(mLock);
     mDone = true;
     mVideoFrames.push(WebmFrame::EOS);
     mAudioFrames.push(WebmFrame::EOS);
@@ -206,6 +212,11 @@ status_t WebmFrameSinkThread::stop() {
 void WebmFrameSinkThread::run() {
     int numVideoKeyFrames = 0;
     List<const sp<WebmFrame> > outstandingFrames;
+    {
+        Mutex::Autolock autoLock(mLock);
+        mCondition.signal();
+    }
+
     while (!mDone) {
         ALOGV("wait v frame");
         const sp<WebmFrame> videoFrame = mVideoFrames.peek();

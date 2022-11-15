@@ -87,6 +87,9 @@ private:
 
     volatile bool mDone;
 
+    Mutex mLock;
+    Condition mCondition;
+
     static void initCluster(
             List<const sp<WebmFrame> >& frames,
             uint64_t& clusterTimecodeL,
