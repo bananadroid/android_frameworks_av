@@ -240,6 +240,60 @@ sp<IMemory> StagefrightMetadataRetriever::getImageInternal(
         }
     }
 
+    if (bitDepth == 10) {
+        /* b/258355840
+         * 10bit thumbnail is supported since android T launching devices
+         * some components may not support COLOR_FormatYUVP010
+         */
+        bool hardwareCodecSupportsP010 = true;
+        const sp<IMediaCodecList> list = MediaCodecList::getInstance();
+        if (list != nullptr) {
+            size_t index = 0;
+            for (;;) {
+                ssize_t matchIndex =
+                    list->findCodecByType(mime, false /* encoder */, index);
+
+                if (matchIndex < 0) {
+                    break;
+                }
+                index = matchIndex + 1;
+
+                const sp<MediaCodecInfo> info = list->getCodecInfo(matchIndex);
+                if ((info == nullptr) ||
+                    /* regardless of supportability of s/w codec */
+                    (MediaCodecList::isSoftwareCodec(AString(info->getCodecName())))) {
+                    continue;
+                }
+
+                const sp<MediaCodecInfo::Capabilities> caps =
+                        info->getCapabilitiesFor(mime);
+                if (caps == nullptr) {
+                    continue;
+                }
+
+                hardwareCodecSupportsP010 = false;
+                Vector<uint32_t> colors;
+                caps->getSupportedColorFormats(&colors);
+                for (uint32_t color : colors) {
+                    if (color == COLOR_FormatYUVP010) {
+                        hardwareCodecSupportsP010 = true;
+                        break;
+                    }
+                }
+
+                if (!hardwareCodecSupportsP010) {
+                    /* 10bit could be handled when all codecs support P010 */
+                    break;
+                }
+            }
+        }
+
+        if (!hardwareCodecSupportsP010) {
+            ALOGD("COLOR_FormatYUVP010 is not supported. restrict to 8bit");
+            bitDepth = 8;
+        }
+    }
+
     if (metaOnly) {
         return FrameDecoder::getMetadataOnly(trackMeta, colorFormat, thumbnail, bitDepth);
     }
