@@ -1507,13 +1507,21 @@ void AudioFlinger::PlaybackThread::Track::copyMetadataTo(MetadataInserter& backI
     *backInserter++ = metadata;
 }
 
-void AudioFlinger::PlaybackThread::Track::setTeePatches(TeePatches teePatches) {
-    forEachTeePatchTrack([](auto patchTrack) { patchTrack->destroy(); });
-    mTeePatches = std::move(teePatches);
-    if (mState == TrackBase::ACTIVE || mState == TrackBase::RESUMING ||
-            mState == TrackBase::STOPPING_1) {
-        forEachTeePatchTrack([](auto patchTrack) { patchTrack->start(); });
+void AudioFlinger::PlaybackThread::Track::updateTeePatches() {
+    if (mTeePatchesToUpdate.has_value()) {
+        forEachTeePatchTrack([](auto patchTrack) { patchTrack->destroy(); });
+        mTeePatches = mTeePatchesToUpdate.value();
+        if (mState == TrackBase::ACTIVE || mState == TrackBase::RESUMING ||
+                mState == TrackBase::STOPPING_1) {
+            forEachTeePatchTrack([](auto patchTrack) { patchTrack->start(); });
+        }
+        mTeePatchesToUpdate.reset();
     }
+}
+
+void AudioFlinger::PlaybackThread::Track::setTeePatchesToUpdate(TeePatches teePatchesToUpdate) {
+    mTeePatchesToUpdate = std::move(teePatchesToUpdate);
+    mNeedUpdateTeePatches = true;
 }
 
 status_t AudioFlinger::PlaybackThread::Track::getTimestamp(AudioTimestamp& timestamp)
