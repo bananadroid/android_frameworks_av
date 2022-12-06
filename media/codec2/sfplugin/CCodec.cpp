@@ -1074,15 +1074,24 @@ void CCodec::configure(const sp<AMessage> &msg) {
                 }
             } else {
                 if ((config->mDomain & Config::IS_ENCODER) || !surface) {
-                    if (vendorSdkVersion < __ANDROID_API_S__ &&
-                            (format == COLOR_FormatYUV420Planar ||
-                             format == COLOR_FormatYUV420PackedPlanar ||
-                             format == COLOR_FormatYUV420SemiPlanar ||
-                             format == COLOR_FormatYUV420PackedSemiPlanar)) {
-                        // pre-S framework used to map these color formats into YV12.
-                        // Codecs from older vendor partition may be relying on
-                        // this assumption.
-                        format = HAL_PIXEL_FORMAT_YV12;
+                    if (vendorSdkVersion < __ANDROID_API_S__) {
+                        // pre-S framework used to map these color formats into YV12 or
+                        // YCBCR_420_888. Codecs from older vendor partition may be relying
+                        // on this assumption.
+                        switch (format) {
+                            case COLOR_FormatYUV420Planar:
+                            case COLOR_FormatYUV420PackedPlanar:
+                            case COLOR_FormatYUV420SemiPlanar:
+                            case COLOR_FormatYUV420PackedSemiPlanar:
+                                format = HAL_PIXEL_FORMAT_YV12;
+                                break;
+                            case COLOR_FormatYUV420Flexible:
+                                format = HAL_PIXEL_FORMAT_YCBCR_420_888;
+                                break;
+                            default:
+                                // No-op
+                                break;
+                        }
                     }
                     switch (format) {
                         case COLOR_FormatYUV420Flexible:
