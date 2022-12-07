@@ -1738,6 +1738,7 @@ AudioFlinger::EffectHandle::EffectHandle(const sp<EffectBase>& effect,
     mNotifyFramesProcessed(notifyFramesProcessed)
 {
     ALOGV("constructor %p client %p", this, client.get());
+    setMinSchedulerPolicy(SCHED_NORMAL, ANDROID_PRIORITY_AUDIO);
 
     if (client == 0) {
         return;
