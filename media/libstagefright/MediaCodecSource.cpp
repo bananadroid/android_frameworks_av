@@ -547,11 +547,16 @@ status_t MediaCodecSource::initEncoder() {
             mEncoderActivityNotify = new AMessage(kWhatEncoderActivity, mReflector);
             mEncoder->setCallback(mEncoderActivityNotify);
 
+            AString codecName = matchingCodecs[ix];
+            bool isHWEnc = codecName.startsWith("c2.qti");
+
             err = mEncoder->configure(
                         mOutputFormat,
                         NULL /* nativeWindow */,
                         NULL /* crypto */,
-                        MediaCodec::CONFIGURE_FLAG_ENCODE);
+                        MediaCodec::CONFIGURE_FLAG_ENCODE |
+                        ((mIsVideo && isHWEnc && (mFlags & FLAG_USE_SURFACE_INPUT)) ?
+                         MediaCodec::CONFIGURE_FLAG_USE_BLOCK_MODEL : 0));
 
             if (err == OK) {
                 break;
