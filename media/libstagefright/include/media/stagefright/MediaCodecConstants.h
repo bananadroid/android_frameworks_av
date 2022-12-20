@@ -881,6 +881,7 @@ constexpr int32_t INFO_TRY_AGAIN_LATER        = -1;
 constexpr int32_t VIDEO_SCALING_MODE_SCALE_TO_FIT               = 1;
 constexpr int32_t VIDEO_SCALING_MODE_SCALE_TO_FIT_WITH_CROPPING = 2;
 constexpr char PARAMETER_KEY_OFFSET_TIME[] = "time-offset-us";
+constexpr char PARAMETER_KEY_QUALITY[] = "quality";
 constexpr char PARAMETER_KEY_REQUEST_SYNC_FRAME[] = "request-sync";
 constexpr char PARAMETER_KEY_SUSPEND[] = "drop-input-frames";
 constexpr char PARAMETER_KEY_SUSPEND_TIME[] = "drop-start-time-us";

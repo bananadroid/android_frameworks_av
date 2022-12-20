@@ -1644,7 +1644,7 @@ size_t HeicCompositeStream::calcAppSegmentMaxSize(const CameraMetadata& info) {
 void HeicCompositeStream::updateCodecQualityLocked(int32_t quality) {
     if (quality != mQuality) {
         sp<AMessage> qualityParams = new AMessage;
-        qualityParams->setInt32(PARAMETER_KEY_VIDEO_BITRATE, quality);
+        qualityParams->setInt32(PARAMETER_KEY_QUALITY, quality);
         status_t res = mCodec->setParameters(qualityParams);
         if (res != OK) {
             ALOGE("%s: Failed to set codec quality: %s (%d)",
