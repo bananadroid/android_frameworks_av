@@ -26,6 +26,9 @@
 #include <private/android/AHardwareBufferHelpers.h>
 #include <utils/Log.h>
 
+// Must be in sync with the value in HeicCompositeStream.cpp and android_media_Utils.cpp
+#define CAMERA3_HEIC_BLOB_ID 0x00FE
+
 using namespace android;
 
 #define ALIGN(x, mask) ( ((x) + (mask) - 1) & ~((mask) - 1) )
@@ -390,20 +393,21 @@ AImage::getJpegSize() const {
     // First check for JPEG transport header at the end of the buffer
     uint8_t* header = jpegBuffer + (width - sizeof(struct camera3_jpeg_blob_v2));
     struct camera3_jpeg_blob_v2* blob = (struct camera3_jpeg_blob_v2*)(header);
-    if (blob->jpeg_blob_id == CAMERA3_JPEG_BLOB_ID) {
+    if (blob->jpeg_blob_id == CAMERA3_JPEG_BLOB_ID ||
+            blob->jpeg_blob_id == CAMERA3_HEIC_BLOB_ID) {
         size = blob->jpeg_size;
-        ALOGV("%s: Jpeg size = %d", __FUNCTION__, size);
+        ALOGV("%s: Jpeg/Heic size = %d", __FUNCTION__, size);
     }
 
     // failed to find size, default to whole buffer
     if (size == 0) {
         /*
-         * This is a problem because not including the JPEG header
-         * means that in certain rare situations a regular JPEG blob
-         * will be misidentified as having a header, in which case
+         * This is a problem because not including the JPEG/BLOB header
+         * means that in certain rare situations a regular JPEG/HEIC blob
+         * will be mis-identified as having a header, in which case
          * we will get a garbage size value.
          */
-        ALOGW("%s: No JPEG header detected, defaulting to size=width=%d",
+        ALOGW("%s: No JPEG/HEIC header detected, defaulting to size=width=%d",
                 __FUNCTION__, width);
         size = width;
     }
