@@ -157,7 +157,8 @@ NuPlayer::Renderer::Renderer(
       mTotalBuffersQueued(0),
       mLastAudioBufferDrained(0),
       mUseAudioCallback(false),
-      mWakeLock(new AWakeLock()) {
+      mWakeLock(new AWakeLock()),
+      mNeedVideoClearAnchor(false) {
     CHECK(mediaClock != NULL);
     mPlaybackRate = mPlaybackSettings.mSpeed;
     mMediaClock->setPlaybackRate(mPlaybackRate);
@@ -233,6 +234,10 @@ status_t NuPlayer::Renderer::onConfigPlayback(const AudioPlaybackRate &rate /* s
         if (err != OK) {
             return err;
         }
+    }
+
+    if (!mHasAudio && mHasVideo) {
+        mNeedVideoClearAnchor = true;
     }
     mPlaybackSettings = rate;
     mPlaybackRate = rate.mSpeed;
@@ -327,7 +332,6 @@ void NuPlayer::Renderer::flush(bool audio, bool notifyComplete) {
             mNextVideoTimeMediaUs = -1;
         }
 
-        mMediaClock->clearAnchor();
         mVideoLateByUs = 0;
         mSyncQueues = false;
     }
@@ -1346,6 +1350,10 @@ void NuPlayer::Renderer::postDrainVideoQueue() {
 
     {
         Mutex::Autolock autoLock(mLock);
+        if (mNeedVideoClearAnchor && !mHasAudio) {
+            mNeedVideoClearAnchor = false;
+            clearAnchorTime();
+        }
         if (mAnchorTimeMediaUs < 0) {
             mMediaClock->updateAnchor(mediaTimeUs, nowUs, mediaTimeUs);
             mAnchorTimeMediaUs = mediaTimeUs;
@@ -1673,7 +1681,17 @@ void NuPlayer::Renderer::onFlush(const sp<AMessage> &msg) {
         // is flushed.
         syncQueuesDone_l();
     }
-    clearAnchorTime();
+
+    if (audio && mHasVideo) {
+        // Audio should not clear anchor(MediaClock) directly, because video
+        // postDrainVideoQueue sets msg kWhatDrainVideoQueue into MediaClock
+        // timer, clear anchor without update immediately may block msg posting.
+        // So, postpone clear action to video to ensure anchor can be updated
+        // immediately after clear
+        mNeedVideoClearAnchor = true;
+    } else {
+        clearAnchorTime();
+    }
 
     ALOGV("flushing %s", audio ? "audio" : "video");
     if (audio) {
