@@ -25,11 +25,11 @@
 #define ALOGVV(...) ((void)0)
 #endif
 
-#ifdef USES_OPLUS_CAMERA
-#define TAG_NAME "com.oplus.packageName"
+#if defined(USES_OPLUS_CAMERA)
+#define PKG_TAG_CAMERA "com.oplus.packageName"
 #endif
-#ifdef USES_NOTHING_CAMERA
-#define TAG_NAME "com.nothing.device.package_name"
+#if defined(USES_NOTHING_CAMERA)
+#define PKG_TAG_CAMERA "com.nothing.device.package_name"
 #endif
 
 // Convenience macro for transient errors
@@ -2294,7 +2294,7 @@ status_t Camera3Device::configureStreamsLocked(int operatingMode,
         return BAD_VALUE;
     }
 
-#ifdef TAG_NAME
+#if defined(USES_OPLUS_CAMERA) || defined(USES_NOTHING_CAMERA)
     sp<VendorTagDescriptor> vTags;
     sp<VendorTagDescriptorCache> vCache = VendorTagDescriptorCache::getGlobalVendorTagCache();
     if (vCache.get()) {
@@ -2303,8 +2303,8 @@ status_t Camera3Device::configureStreamsLocked(int operatingMode,
         sessionParams.unlock(metaBuffer);
         vCache->getVendorTagDescriptor(vendorId, &vTags);
         uint32_t tag;
-        if (CameraMetadata::getTagFromName(TAG_NAME, vTags.get(), &tag)) {
-            ALOGE("%s: Unable to get %s tag", __FUNCTION__, TAG_NAME);
+        if (CameraMetadata::getTagFromName(PKG_TAG_CAMERA, vTags.get(), &tag)) {
+            ALOGE("%s: Unable to get %s tag", __FUNCTION__, PKG_TAG_CAMERA);
         } else {
             std::string pkgName = CameraService::getCurrPackageName();
             status_t res = const_cast<CameraMetadata&>(sessionParams).update(tag, String8(pkgName.c_str()));

@@ -1098,8 +1098,10 @@ status_t StagefrightRecorder::setParameter(
         }
     } else if (key == "log-session-id") {
         return setLogSessionId(value);
+#if defined(USES_OPLUS_CAMERA) || defined(USES_NOTHING_CAMERA)
     } else if (key == "set-title") {
         return OK;
+#endif
     } else {
         ALOGE("setParameter: failed to find key %s", key.string());
     }

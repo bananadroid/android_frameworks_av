@@ -263,7 +263,10 @@ public:
     // Shared utilities
     static binder::Status filterGetInfoErrorCode(status_t err);
 
+
+#if defined(USES_OPLUS_CAMERA) || defined(USES_NOTHING_CAMERA)
     static std::string getCurrPackageName();
+#endif
 
     /////////////////////////////////////////////////////////////////////
     // CameraClient functionality
