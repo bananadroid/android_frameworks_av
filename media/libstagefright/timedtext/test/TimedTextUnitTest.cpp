@@ -240,7 +240,10 @@ TEST_P(Text3GPPDescriptionTest, Text3GPPGlobalDescriptionTest) {
 
                     if (remaining < tempFontNameLength) break;
                     const uint8_t *tmpFont = tmpData;
-                    ALOGI("FontName = %.*s", tempFontNameLength, tmpFont);
+                    char *tmpFontName = strndup((const char *)tmpFont, tempFontNameLength);
+                    ASSERT_NE(tmpFontName, nullptr) << "Font Name is null";
+                    ALOGI("FontName = %s", tmpFontName);
+                    free(tmpFontName);
                     tmpData += tempFontNameLength;
                     remaining -= tempFontNameLength;
                     fontRecordEntries.push_back({tempFontID, tempFontNameLength, tmpFont});
