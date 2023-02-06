@@ -2304,6 +2304,7 @@ void CCodecBufferChannel::sendOutputBuffers() {
 
     constexpr int kMaxReallocTry = 5;
     int reallocTryNum = 0;
+    Mutex::Autolock autoLock(mSendBufferLock);
 
     while (true) {
         Mutexed<Output>::Locked output(mOutput);

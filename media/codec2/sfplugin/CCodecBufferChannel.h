@@ -397,6 +397,7 @@ private:
     std::atomic_bool mSendEncryptedInfoBuffer;
 
     std::atomic_bool mTunneled;
+    Mutex mSendBufferLock;
 };
 
 // Conversion of a c2_status_t value to a status_t value may depend on the
