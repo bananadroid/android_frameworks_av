@@ -395,6 +395,11 @@ sp<IMemory> StagefrightMetadataRetriever::getFrameInternal(
         return NULL;
     }
 
+    // thumbnail extracting typically get one frame at a time,
+    // so set kKeyFrameRate to 1 then reduce memory resource consumption
+    int32_t thumbnailFrameRate = 1;
+    trackMeta->setInt32(kKeyFrameRate, thumbnailFrameRate);
+
     bool preferhw = property_get_bool(
             "media.stagefright.thumbnail.prefer_hw_codecs", false);
     uint32_t flags = preferhw ? 0 : MediaCodecList::kPreferSoftwareCodecs;
