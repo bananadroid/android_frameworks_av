@@ -87,7 +87,7 @@ void PipelineWatcher::onWorkDone(uint64_t frameIndex) {
     ALOGV("onWorkDone(frameIndex=%llu)", (unsigned long long)frameIndex);
     auto it = mFramesInPipeline.find(frameIndex);
     if (it == mFramesInPipeline.end()) {
-        ALOGD("onWorkDone: frameIndex not found (%llu); ignored",
+        ALOGV("onWorkDone: frameIndex not found (%llu); ignored",
               (unsigned long long)frameIndex);
         return;
     }
