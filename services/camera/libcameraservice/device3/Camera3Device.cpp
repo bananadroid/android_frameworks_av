@@ -740,8 +740,7 @@ status_t Camera3Device::convertMetadataListToRequestListLocked(
         auto firstRequest = requestList->begin();
         for (auto& outputStream : (*firstRequest)->mOutputStreams) {
             if (outputStream->isVideoStream()) {
-                (*firstRequest)->mBatchSize = requestList->size();
-                outputStream->setBatchSize(requestList->size());
+                outputStream->setBatchSize(applyMaxBatchSizeLocked(requestList, outputStream));
                 break;
             }
         }
@@ -2759,6 +2758,59 @@ void Camera3Device::flushInflightRequests() {
         listener, *this, *mInterface, *this, mSessionStatsBuilder};
 
     camera3::flushInflightRequests(states);
+}
+
+size_t Camera3Device::applyMaxBatchSizeLocked(RequestList* requestList,
+                                              sp<camera3::Camera3OutputStreamInterface> stream) {
+    int batchSize = requestList->size();
+    const auto& metadata = (*requestList->begin())->mSettingsList.begin()->metadata;
+
+    uint32_t tag = ANDROID_CONTROL_AVAILABLE_HIGH_SPEED_VIDEO_CONFIGURATIONS;
+    auto sensorPixelModeEntry = metadata.find(ANDROID_SENSOR_PIXEL_MODE);
+    if (sensorPixelModeEntry.count != 0) {
+        if (ANDROID_SENSOR_PIXEL_MODE_MAXIMUM_RESOLUTION == sensorPixelModeEntry.data.u8[0]) {
+            tag = ANDROID_CONTROL_AVAILABLE_HIGH_SPEED_VIDEO_CONFIGURATIONS_MAXIMUM_RESOLUTION;
+        }
+    }
+
+    const auto fpsRange = metadata.find(ANDROID_CONTROL_AE_TARGET_FPS_RANGE);
+    if (fpsRange.count > 1) {
+        auto configEntry = mDeviceInfo.find(tag);
+        for (size_t index = 4; index < configEntry.count; index += 5) {
+            if (stream->getWidth() == static_cast<uint32_t>(configEntry.data.i32[index - 4]) &&
+                stream->getHeight() == static_cast<uint32_t>(configEntry.data.i32[index - 3]) &&
+                fpsRange.data.i32[0] == configEntry.data.i32[index - 2] &&
+                fpsRange.data.i32[1] == configEntry.data.i32[index - 1]) {
+                const int maxBatchSize = configEntry.data.i32[index - 1] / 30;
+                const int reportedSize = configEntry.data.i32[index];
+
+                if (maxBatchSize % reportedSize == 0 && requestList->size() % reportedSize == 0) {
+                    batchSize = reportedSize;
+                    ALOGVV("Matching high speed configuration found. Limit batch size to %d",
+                           batchSize);
+                } else if (maxBatchSize % reportedSize == 0 &&
+                           reportedSize % requestList->size() == 0) {
+                    ALOGVV("Matching high speed configuration found, but requested batch size is "
+                           "divisor of batch_size_max. No need to limit batch size.");
+                } else {
+                    ALOGW("Matching high speed configuration found, but batch_size_max is not a "
+                          "divisor of corresponding fps_max/30 or requested batch size is not a "
+                          "divisor of batch_size_max, (fps_max %d, batch_size_max %d, requested "
+                          "batch size %zu)",
+                          configEntry.data.i32[index - 1], reportedSize, requestList->size());
+                }
+                break;
+            }
+        }
+    }
+
+    for (auto request = requestList->begin(); request != requestList->end(); request++) {
+        if (requestList->distance(requestList->begin(), request) % batchSize == 0) {
+            (*request)->mBatchSize = batchSize;
+        }
+    }
+
+    return batchSize;
 }
 
 CameraMetadata Camera3Device::getLatestRequestLocked() {
