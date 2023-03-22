@@ -30,8 +30,6 @@ cc_library_shared {
     cflags: [
         "-O2",
         "-fvisibility=hidden",
-
-        "-DBUILD_FLOAT",
         "-DSUPPORT_MC",
 
         "-Wall",
