@@ -341,6 +341,9 @@ class C2SoftHevcEnc::IntfImpl : public SimpleInterface<void>::BaseParams {
         // By default needsUpdate = false in case the supplied level does meet
         // the requirements.
         bool needsUpdate = false;
+        if (!me.F(me.v.level).supportsAtAll(me.v.level)) {
+            needsUpdate = true;
+        }
         for (const LevelLimits &limit : kLimits) {
             if (samples <= limit.samples && samplesPerSec <= limit.samplesPerSec &&
                     bitrate.v.value <= limit.bitrate) {
@@ -366,6 +369,7 @@ class C2SoftHevcEnc::IntfImpl : public SimpleInterface<void>::BaseParams {
             // We set to the highest supported level.
             me.set().level = LEVEL_HEVC_MAIN_5_2;
         }
+
         return C2R::Ok();
     }
 
