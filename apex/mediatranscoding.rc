@@ -1,5 +1,4 @@
 ##  for SDK releases 29..31
-##  where writepid has not yet been replaced by task_profiles
 ##
 #
 # media.transcoding service is defined on com.android.media apex which goes back
@@ -11,6 +10,6 @@ service media.transcoding /apex/com.android.media/bin/mediatranscoding
     group media
     ioprio rt 4
     # Restrict to little cores only with system-background cpuset.
-    writepid /dev/cpuset/system-background/tasks
+    task_profiles ServiceCapacityLow
     interface aidl media.transcoding
     disabled
