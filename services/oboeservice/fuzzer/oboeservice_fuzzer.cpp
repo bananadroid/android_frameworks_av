@@ -68,7 +68,7 @@ aaudio_input_preset_t kAAudioInputPresets[] = {
     AAUDIO_INPUT_PRESET_UNPROCESSED,       AAUDIO_INPUT_PRESET_VOICE_PERFORMANCE,
 };
 
-aaudio_channel_mask_t kAAudioChannelMasks[] = {
+aaudio_channel_mask_t kOutputAAudioChannelMasks[] = {
     AAUDIO_UNSPECIFIED,
     AAUDIO_CHANNEL_INDEX_MASK_1,
     AAUDIO_CHANNEL_INDEX_MASK_2,
@@ -96,14 +96,6 @@ aaudio_channel_mask_t kAAudioChannelMasks[] = {
     AAUDIO_CHANNEL_INDEX_MASK_24,
     AAUDIO_CHANNEL_MONO,
     AAUDIO_CHANNEL_STEREO,
-    AAUDIO_CHANNEL_FRONT_BACK,
-    AAUDIO_CHANNEL_2POINT0POINT2,
-    AAUDIO_CHANNEL_2POINT1POINT2,
-    AAUDIO_CHANNEL_3POINT0POINT2,
-    AAUDIO_CHANNEL_3POINT1POINT2,
-    AAUDIO_CHANNEL_5POINT1,
-    AAUDIO_CHANNEL_MONO,
-    AAUDIO_CHANNEL_STEREO,
     AAUDIO_CHANNEL_2POINT1,
     AAUDIO_CHANNEL_TRI,
     AAUDIO_CHANNEL_TRI_BACK,
@@ -128,11 +120,21 @@ aaudio_channel_mask_t kAAudioChannelMasks[] = {
     AAUDIO_CHANNEL_9POINT1POINT6,
 };
 
+aaudio_channel_mask_t kInputAAudioChannelMasks[] = {
+    AAUDIO_CHANNEL_MONO,
+    AAUDIO_CHANNEL_STEREO,
+    AAUDIO_CHANNEL_FRONT_BACK,
+    AAUDIO_CHANNEL_2POINT0POINT2,
+    AAUDIO_CHANNEL_2POINT1POINT2,
+    AAUDIO_CHANNEL_3POINT0POINT2,
+    AAUDIO_CHANNEL_3POINT1POINT2,
+    AAUDIO_CHANNEL_5POINT1,
+};
+
 const size_t kNumAAudioFormats = std::size(kAAudioFormats);
 const size_t kNumAAudioUsages = std::size(kAAudioUsages);
 const size_t kNumAAudioContentTypes = std::size(kAAudioContentTypes);
 const size_t kNumAAudioInputPresets = std::size(kAAudioInputPresets);
-const size_t kNumAAudioChannelMasks = std::size(kAAudioChannelMasks);
 
 class FuzzAAudioClient : public virtual RefBase, public AAudioServiceInterface {
    public:
@@ -371,14 +373,17 @@ void OboeserviceFuzzer::process(const uint8_t *data, size_t size) {
 
     request.getConfiguration().setDeviceId(fdp.ConsumeIntegral<int32_t>());
     request.getConfiguration().setSampleRate(fdp.ConsumeIntegral<int32_t>());
-    request.getConfiguration().setChannelMask((aaudio_channel_mask_t)(
-        fdp.ConsumeBool()
-            ? fdp.ConsumeIntegral<int32_t>()
-            : kAAudioChannelMasks[fdp.ConsumeIntegralInRange<int32_t>(
-                    0, kNumAAudioChannelMasks - 1)]));
     request.getConfiguration().setDirection(
-        fdp.ConsumeBool() ? fdp.ConsumeIntegral<int32_t>()
-                          : (fdp.ConsumeBool() ? AAUDIO_DIRECTION_OUTPUT : AAUDIO_DIRECTION_INPUT));
+            fdp.ConsumeBool()
+                    ? fdp.ConsumeIntegral<int32_t>()
+                    : (fdp.ConsumeBool() ? AAUDIO_DIRECTION_OUTPUT : AAUDIO_DIRECTION_INPUT));
+    if (request.getConfiguration().getDirection() == AAUDIO_DIRECTION_INPUT) {
+        request.getConfiguration().setChannelMask(
+                fdp.PickValueInArray<aaudio_channel_mask_t>(kInputAAudioChannelMasks));
+    } else {
+        request.getConfiguration().setChannelMask(
+                fdp.PickValueInArray<aaudio_channel_mask_t>(kOutputAAudioChannelMasks));
+    }
     request.getConfiguration().setSharingMode(
         fdp.ConsumeBool()
             ? fdp.ConsumeIntegral<int32_t>()
