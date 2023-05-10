@@ -145,6 +145,8 @@ struct Codec2Client : public Codec2ConfigurableClient {
     typedef ::android::hardware::media::c2::V1_2::IComponentStore Base1_2;
     typedef Base1_0 Base;
 
+    typedef ::android::hardware::media::c2::V1_0::IConfigurable IConfigurable;
+
     struct Listener;
 
     typedef Codec2ConfigurableClient Configurable;
@@ -230,7 +232,10 @@ struct Codec2Client : public Codec2ConfigurableClient {
             char const* serviceName = nullptr);
 
     // base cannot be null.
-    Codec2Client(sp<Base> const& base, size_t serviceIndex);
+    Codec2Client(
+            sp<Base> const& base,
+            sp<IConfigurable> const& configurable,
+            size_t serviceIndex);
 
 protected:
     sp<Base1_0> mBase1_0;
