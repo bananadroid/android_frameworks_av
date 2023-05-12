@@ -19,8 +19,8 @@ sched_yield: 1
 close: 1
 dup: 1
 ppoll: 1
-mprotect: arg2 in ~PROT_EXEC || arg2 in ~PROT_WRITE
-mmap: arg2 in ~PROT_EXEC || arg2 in ~PROT_WRITE
+mprotect: 1
+mmap: 1
 getuid: 1
 getrlimit: 1
 fstat: 1
@@ -61,25 +61,6 @@ rt_sigreturn: 1
 getrandom: 1
 madvise: 1
 
-# crash dump policy additions
-clock_gettime: 1
-getpid: 1
-gettid: 1
-pipe2: 1
-recvmsg: 1
-process_vm_readv: 1
-tgkill: 1
-rt_sigaction: 1
-rt_tgsigqueueinfo: 1
-#mprotect: arg2 in 0x1|0x2
-munmap: 1
-#mmap: arg2 in 0x1|0x2
-geteuid: 1
-getgid: 1
-getegid: 1
-getgroups: 1
-sysinfo: 1
-
 # Android profiler (heapprofd, traced_perf) additions, where not already
 # covered by the rest of the file, or by builtin minijail allow-listing of
 # logging-related syscalls.
@@ -90,4 +71,11 @@ sysinfo: 1
 setsockopt: 1
 sendmsg: 1
 
+# Required by AddressSanitizer
+gettid: 1
+sched_yield: 1
+getpid: 1
+gettid: 1
+
+@include /apex/com.android.media.swcodec/etc/seccomp_policy/crash_dump.arm64.policy
 @include /apex/com.android.media.swcodec/etc/seccomp_policy/code_coverage.arm64.policy
