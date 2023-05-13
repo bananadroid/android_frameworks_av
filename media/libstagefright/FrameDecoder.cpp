@@ -634,6 +634,11 @@ status_t VideoFrameDecoder::onOutputReceived(
         return ERROR_MALFORMED;
     }
 
+    int32_t slice_height;
+    if (outputFormat->findInt32("slice-height", &slice_height) && slice_height > 0) {
+        height = slice_height;
+    }
+
     if (!outputFormat->findInt32("stride", &stride) ||
             !outputFormat->findInt32("slice-height", &slice_height)) {
         if (mCaptureLayer == NULL) {
@@ -650,11 +655,6 @@ status_t VideoFrameDecoder::onOutputReceived(
         crop_left = crop_top = 0;
         crop_right = width - 1;
         crop_bottom = height - 1;
-    }
-
-    int32_t slice_height;
-    if (outputFormat->findInt32("slice-height", &slice_height) && slice_height > 0) {
-        height = slice_height;
     }
 
     uint32_t bitDepth = 8;
