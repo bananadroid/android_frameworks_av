@@ -478,7 +478,7 @@ status_t EffectConversionHelperAidl::updateEventFlags() {
                   efGroup);
             status = (status == OK) ? BAD_VALUE : status;
         }
-    } else if (isBypassingOrOffload()) {
+    } else if (isBypassingOrTunnel()) {
         // for effect with bypass (no processing) or offloadIndication flag, it's okay to not have
         // statusQ
         return OK;
@@ -488,8 +488,8 @@ status_t EffectConversionHelperAidl::updateEventFlags() {
     return status;
 }
 
-bool EffectConversionHelperAidl::isBypassingOrOffload() const {
-    return isBypassing() || isOffload();
+bool EffectConversionHelperAidl::isBypassingOrTunnel() const {
+    return isBypassing() || isTunnel();
 }
 
 bool EffectConversionHelperAidl::isBypassing() const {
@@ -498,10 +498,10 @@ bool EffectConversionHelperAidl::isBypassing() const {
             (mIsProxyEffect && std::static_pointer_cast<EffectProxy>(mEffect)->isBypassing()));
 }
 
-bool EffectConversionHelperAidl::isOffload() const {
+bool EffectConversionHelperAidl::isTunnel() const {
     return mEffect &&
-           (mDesc.common.flags.offloadIndication ||
-            (mIsProxyEffect && std::static_pointer_cast<EffectProxy>(mEffect)->isOffload()));
+           (mDesc.common.flags.hwAcceleratorMode == Flags::HardwareAccelerator::TUNNEL ||
+            (mIsProxyEffect && std::static_pointer_cast<EffectProxy>(mEffect)->isTunnel()));
 }
 
 Descriptor EffectConversionHelperAidl::getDescriptor() const {
