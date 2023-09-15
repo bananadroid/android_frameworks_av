@@ -5658,6 +5658,8 @@ void MediaCodec::setState(State newState) {
         mErrorLog.clear();
     }
 
+    mState = newState;
+
     if (newState == UNINITIALIZED) {
         // return any straggling buffers, e.g. if we got here on an error
         returnBuffersToCodec();
@@ -5667,8 +5669,6 @@ void MediaCodec::setState(State newState) {
         // another component.. and the cycle continues.
         mFlags &= ~kFlagSawMediaServerDie;
     }
-
-    mState = newState;
 
     if (mBatteryChecker != nullptr) {
         mBatteryChecker->setExecuting(isExecuting());
