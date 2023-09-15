@@ -5236,8 +5236,7 @@ void CameraService::updateStatus(StatusInternal status, const String8& cameraId,
             for (auto& listener : mListenerList) {
                 bool isVendorListener = listener->isVendorListener();
                 if (shouldSkipStatusUpdates(deviceKind, isVendorListener,
-                        listener->getListenerPid(), listener->getListenerUid()) ||
-                        isVendorListener) {
+                        listener->getListenerPid(), listener->getListenerUid())) {
                     ALOGV("Skipping discovery callback for system-only camera device %s",
                             cameraId.c_str());
                     continue;
