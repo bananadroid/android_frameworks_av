@@ -148,6 +148,11 @@ void NuPlayer::Decoder::onMessageReceived(const sp<AMessage> &msg) {
                     mIsAudio ? "audio" : "video", cbID, mPaused);
 
             if (mPaused) {
+                if (mIsAudio && (MediaCodec::CB_OUTPUT_FORMAT_CHANGED == cbID)) {
+                    ALOGD("sending msg OUTPUT_FORMAT_CHANGED but paused");
+                    CHECK(msg->findMessage("format", &mFormat));
+                    mMsgTime = systemTime();
+                }
                 break;
             }
 
@@ -489,6 +494,16 @@ void NuPlayer::Decoder::onSetRenderer(const sp<Renderer> &renderer) {
 
 void NuPlayer::Decoder::onResume(bool notifyComplete) {
     mPaused = false;
+
+    if (mFormat != NULL) {
+        nsecs_t deltaTime = systemTime() - mMsgTime;
+        ALOGD("rsme - flus deltaTime: %lld", deltaTime);
+        if (deltaTime < 5 * 1000000LL) {
+            ALOGD("handleOutputFormatChange again after resume");
+            handleOutputFormatChange(mFormat);
+        }
+        mFormat.clear();
+    }
 
     if (notifyComplete) {
         mResumePending = true;
