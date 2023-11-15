@@ -18,12 +18,15 @@
 #define LOG_TAG "Codec2-OutputBufferQueue"
 #include <android-base/logging.h>
 
+#include <android-base/parseint.h>
+#include <android-base/properties.h>
 #include <android/hardware/graphics/bufferqueue/2.0/IGraphicBufferProducer.h>
 #include <codec2/hidl/output.h>
 #include <cutils/ashmem.h>
 #include <gui/bufferqueue/2.0/B2HGraphicBufferProducer.h>
 #include <gui/Surface.h>
 #include <sys/mman.h>
+#include <server_configurable_flags/get_flags.h>
 
 #include <C2AllocatorGralloc.h>
 #include <C2BlockInternal.h>
@@ -44,6 +47,8 @@ using B2HGraphicBufferProducer = ::android::hardware::graphics::bufferqueue::
         V2_0::utils::B2HGraphicBufferProducer;
 
 namespace /* unnamed */ {
+
+using server_configurable_flags::GetServerConfigurableFlag;
 
 // Create a GraphicBuffer object from a graphic block.
 sp<GraphicBuffer> createGraphicBuffer(const C2ConstGraphicBlock& block) {
@@ -174,12 +179,19 @@ int getUndequeuedBufferCount(const sp<IGraphicBufferProducer>& igbp) {
     int undequeued = 0;
 
     if (igbp) {
+        int renderingDepth = 3;
+
+        std::string value = GetServerConfigurableFlag("media_native", "ccodec_rendering_depth", "3");
+        android::base::ParseInt(value, &renderingDepth);
+
         status_t result = igbp->query(NATIVE_WINDOW_MIN_UNDEQUEUED_BUFFERS, &undequeued);
         if (result != OK) {
             LOG(ERROR) << "getUndequeuedBufferCount -- query failed:"
                           "status = " << result << ".";
-            return 0;
+            return renderingDepth;
         }
+
+        undequeued = (undequeued < renderingDepth)? renderingDepth:undequeued;
 
         LOG(VERBOSE) << "getUndequeuedBufferCount -- " << undequeued;
     }

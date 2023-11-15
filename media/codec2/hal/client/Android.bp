@@ -58,6 +58,7 @@ cc_library {
         "libstagefright_bufferpool@2.0.1",
         "libui",
         "libutils",
+        "server_configurable_flags",
     ],
 
     export_include_dirs: [
