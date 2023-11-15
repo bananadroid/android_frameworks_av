@@ -22,6 +22,7 @@
 #include <codec2/hidl/output.h>
 #include <cutils/ashmem.h>
 #include <gui/bufferqueue/2.0/B2HGraphicBufferProducer.h>
+#include <gui/Surface.h>
 #include <sys/mman.h>
 
 #include <C2AllocatorGralloc.h>
@@ -169,6 +170,23 @@ bool getBufferQueueAssignment(const C2ConstGraphicBlock& block,
             generation, bqId, bqSlot);
 }
 
+int getUndequeuedBufferCount(const sp<IGraphicBufferProducer>& igbp) {
+    int undequeued = 0;
+
+    if (igbp) {
+        status_t result = igbp->query(NATIVE_WINDOW_MIN_UNDEQUEUED_BUFFERS, &undequeued);
+        if (result != OK) {
+            LOG(ERROR) << "getUndequeuedBufferCount -- query failed:"
+                          "status = " << result << ".";
+            return 0;
+        }
+
+        LOG(VERBOSE) << "getUndequeuedBufferCount -- " << undequeued;
+    }
+
+    return undequeued;
+}
+
 } // unnamed namespace
 
 OutputBufferQueue::OutputBufferQueue()
@@ -237,7 +255,7 @@ bool OutputBufferQueue::configure(const sp<IGraphicBufferProducer>& igbp,
                 mMaxDequeueBufferCount = maxDequeueBufferCount;
                 var->lock();
                 var->setSyncStatusLocked(C2SyncVariables::STATUS_INIT);
-                var->setInitialDequeueCountLocked(mMaxDequeueBufferCount, 0);
+                var->setInitialDequeueCountLocked(mMaxDequeueBufferCount - getUndequeuedBufferCount(igbp), 0);
                 var->unlock();
             }
             return false;
@@ -314,7 +332,7 @@ bool OutputBufferQueue::configure(const sp<IGraphicBufferProducer>& igbp,
         }
         if (newSync) {
             newSync->lock();
-            newSync->setInitialDequeueCountLocked(mMaxDequeueBufferCount, success);
+            newSync->setInitialDequeueCountLocked(mMaxDequeueBufferCount - getUndequeuedBufferCount(igbp), success);
             newSync->unlock();
         }
     }
@@ -530,7 +548,7 @@ void OutputBufferQueue::updateMaxDequeueBufferCount(int maxDequeueBufferCount) {
     auto syncVar = mSyncMem ? mSyncMem->mem() : nullptr;
     if (syncVar && !mStopped) {
         syncVar->lock();
-        syncVar->updateMaxDequeueCountLocked(maxDequeueBufferCount);
+        syncVar->updateMaxDequeueCountLocked(maxDequeueBufferCount - getUndequeuedBufferCount(mIgbp));
         syncVar->unlock();
     }
     mMutex.unlock();
