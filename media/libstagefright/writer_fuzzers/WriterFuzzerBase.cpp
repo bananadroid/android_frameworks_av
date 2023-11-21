@@ -204,6 +204,9 @@ void WriterFuzzerBase::sendBuffersToWriter(sp<MediaAdapter> &currentTrack, int32
                                            int32_t startFrameIndex, int32_t endFrameIndex) {
     vector<FrameData> bufferInfo = mBufferSource->getFrameList(trackIndex);
     for (int idx = startFrameIndex; idx < endFrameIndex; ++idx) {
+        if (!mWriter->isSampleMetadataValid(trackIndex, bufferInfo[idx].timeUs)) {
+            continue;
+        }
         sp<ABuffer> buffer = new ABuffer((void *)bufferInfo[idx].buf, bufferInfo[idx].size);
         MediaBuffer *mediaBuffer = new MediaBuffer(buffer);
 
