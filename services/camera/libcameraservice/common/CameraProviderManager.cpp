@@ -1910,7 +1910,7 @@ status_t CameraProviderManager::tryToInitializeAidlProviderLocked(
     using aidl::android::hardware::camera::provider::ICameraProvider;
     std::shared_ptr<ICameraProvider> interface =
             ICameraProvider::fromBinder(ndk::SpAIBinder(
-                    AServiceManager_getService(providerName.c_str())));
+                    AServiceManager_checkService(providerName.c_str())));
 
     if (interface == nullptr) {
         ALOGW("%s: AIDL Camera provider HAL '%s' is not actually available", __FUNCTION__,
