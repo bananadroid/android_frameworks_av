@@ -216,7 +216,7 @@ void CharacterEncodingDetector::detectAndConvert() {
                     const UCharsetMatch** ucma = ucsdet_detectAll(csd, &matches, &status);
                     const UCharsetMatch* bestSingleMatch = getPreferred(s, inputLength,
                             ucma, matches, &goodmatchSingle, &highestSingle);
-                    if (goodmatchSingle || highestSingle > highest)
+                    if (bestSingleMatch != NULL && (goodmatchSingle || highestSingle > highest))
                         enc = ucsdet_getName(bestSingleMatch, &status);
                     else
                         enc = combinedenc;
