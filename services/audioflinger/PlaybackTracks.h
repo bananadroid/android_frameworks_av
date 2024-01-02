@@ -117,6 +117,14 @@ public:
             bool        isOffloadedOrDirect() const { return (mFlags
                             & (AUDIO_OUTPUT_FLAG_COMPRESS_OFFLOAD
                                     | AUDIO_OUTPUT_FLAG_DIRECT)) != 0; }
+            bool isInOffloadThread() const
+                                   {   bool  status = false;
+                                       sp<ThreadBase> thread = mThread.promote();
+                                       if (thread != 0) {
+                                           status = thread->type() == ThreadBase::OFFLOAD;
+                                       }
+                                       return status;
+                                   }
             bool        isStatic() const { return  mSharedBuffer.get() != nullptr; }
 
             status_t    setParameters(const String8& keyValuePairs);
