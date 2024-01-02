@@ -1232,7 +1232,8 @@ void AudioFlinger::PlaybackThread::Track::stop()
             if (playbackThread->mActiveTracks.indexOf(this) < 0) {
                 reset();
                 mState = STOPPED;
-            } else if (!isFastTrack() && !isOffloaded() && !isDirect()) {
+            } else if (!isFastTrack() && !isOffloaded() && !isDirect() &&
+                      playbackThread->type() != DIRECT && playbackThread->type() != OFFLOAD) {
                 mState = STOPPED;
             } else {
                 // For fast tracks prepareTracks_l() will set state to STOPPING_2
