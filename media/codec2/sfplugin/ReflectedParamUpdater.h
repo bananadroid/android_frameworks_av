@@ -66,7 +66,7 @@ public:
 
     struct Dict : public std::map<std::string, Value> {
         Dict() = default;
-        std::string debugString(size_t indent = 0) const;
+        std::string debugString(size_t indent = 0, bool showBlob = true) const;
     };
 
     /**

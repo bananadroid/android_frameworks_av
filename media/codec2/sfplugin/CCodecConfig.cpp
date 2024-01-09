@@ -1299,7 +1299,7 @@ bool CCodecConfig::updateFormats(Domain domain) {
     }
 
     ReflectedParamUpdater::Dict reflected = mParamUpdater->getParams(paramPointers);
-    std::string config = reflected.debugString();
+    std::string config = reflected.debugString(0 /* indent */, false /* dumpBlobContent */);
     std::set<std::string> configLines;
     std::string diff;
     for (size_t start = 0; start != std::string::npos; ) {

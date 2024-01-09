@@ -34,7 +34,7 @@
 
 namespace android {
 
-std::string ReflectedParamUpdater::Dict::debugString(size_t indent_) const {
+std::string ReflectedParamUpdater::Dict::debugString(size_t indent_, bool dumpBlobContent) const {
     std::string indent(indent_, ' ');
     std::stringstream s;
     s << "Dict {" << std::endl;
@@ -94,7 +94,9 @@ std::string ReflectedParamUpdater::Dict::debugString(size_t indent_) const {
             s << "string " << it.first << " = \"" << strValue.c_str() << "\"";
         } else if (it.second.find(&bufValue)) {
             s << "Buffer " << it.first << " = ";
-            if (bufValue != nullptr && bufValue->data() != nullptr && bufValue->size() <= 64) {
+            if (!dumpBlobContent) {
+                s << "<blob>";
+            } else if (bufValue != nullptr && bufValue->data() != nullptr && bufValue->size() <= 64) {
                 s << "{" << std::endl;
                 AString tmp;
                 hexdump(bufValue->data(), bufValue->size(), indent_ + 4, &tmp);
