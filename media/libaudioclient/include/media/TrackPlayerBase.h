@@ -54,6 +54,11 @@ private:
             void doDestroy();
             status_t doSetVolume();
 
+            sp<AudioTrack> getAudioTrack() const {
+                AutoMutex lock(mLock);
+                return mAudioTrack;
+            }
+
             class SelfAudioDeviceCallback : public AudioSystem::AudioDeviceCallback {
             public:
                 SelfAudioDeviceCallback(PlayerBase& self);
@@ -68,6 +73,7 @@ private:
     float mPlayerVolumeL, mPlayerVolumeR;
     sp<AudioTrack::IAudioTrackCallback> mCallbackHandle;
     sp<SelfAudioDeviceCallback> mSelfAudioDeviceCallback;
+    mutable Mutex mLock;
 };
 
 } // namespace android

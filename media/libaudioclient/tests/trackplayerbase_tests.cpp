@@ -16,8 +16,10 @@
 
 #define LOG_TAG "TrackPlayerBaseTest"
 
-#include <gtest/gtest.h>
+#include <atomic>
+#include <thread>
 
+#include <gtest/gtest.h>
 #include <media/TrackPlayerBase.h>
 
 using namespace android;
@@ -43,11 +45,7 @@ class TrackPlayerBaseTest
 
     virtual void SetUp() override {
         mFrameCount = mDuration * mSampleRate;
-        audio_channel_mask_t channelMask = audio_channel_out_mask_from_count(mChannelCount);
-        sp<AudioTrack> track = new AudioTrack(mStreamType, mSampleRate, mFormat, channelMask,
-                                              mFrameCount, mFlags, nullptr /* callback */,
-                                              0 /* notificationFrames */, AUDIO_SESSION_NONE);
-        ASSERT_EQ(track->initCheck(), NO_ERROR);
+        sp<AudioTrack> track = createAudioTrack();
 
         mPlayer = new TrackPlayer();
         mPlayer->init(track.get(), mPlayer, PLAYER_TYPE_AAUDIO, AUDIO_USAGE_MEDIA,
@@ -68,6 +66,15 @@ class TrackPlayerBaseTest
             memset(mBuffer.data() + marker, 127, pulseSize / 2);
             marker += pulseSize;
         }
+    }
+
+    sp<AudioTrack> createAudioTrack() {
+        audio_channel_mask_t channelMask = audio_channel_out_mask_from_count(mChannelCount);
+        sp<AudioTrack> track = new AudioTrack(mStreamType, mSampleRate, mFormat, channelMask,
+                                              mFrameCount, mFlags, nullptr /* callback */,
+                                              0 /* notificationFrames */, AUDIO_SESSION_NONE);
+        EXPECT_EQ(track->initCheck(), NO_ERROR);
+        return track;
     }
 
     void playBuffer() {
@@ -159,3 +166,39 @@ TEST_P(PauseTestParam, PauseTest) {
 
 INSTANTIATE_TEST_SUITE_P(TrackPlayerTest, PauseTestParam,
                          ::testing::Values(std::make_tuple(1.0, 75.0, 2, 24000)));
+
+class DestroyRaceTestParam : public TrackPlayerBaseTest {};
+
+// Simulates a scenario where TrackPlayerBase::destroy() races with other calls
+// on different threads.
+TEST_P(DestroyRaceTestParam, DestroyRaceTest) {
+    ASSERT_EQ(mPlayer->playerStart(), NO_ERROR);
+
+    std::atomic_bool done(false);
+    std::thread t1([&]() {
+        while (!done) {
+            // Keep using this TrackPlayerBase object.
+            mPlayer->playerPause();
+            mPlayer->playerStart();
+        }
+    });
+    std::thread t2([&]() {
+        while (!done) {
+            // Reinitialize it with a new AudioTrack.
+            mPlayer->destroy();
+            auto track = createAudioTrack();
+            mPlayer->init(track, mPlayer, PLAYER_TYPE_AAUDIO, AUDIO_USAGE_MEDIA,
+                          AUDIO_SESSION_NONE);
+            ASSERT_EQ(track->initCheck(), NO_ERROR);
+        }
+    });
+
+    // Let the two threads run for a little while.
+    std::this_thread::sleep_for(std::chrono::seconds(2));
+    done = true;
+    t1.join();
+    t2.join();
+}
+
+INSTANTIATE_TEST_SUITE_P(TrackPlayerTest, DestroyRaceTestParam,
+                         ::testing::Values(std::make_tuple(1.0, 25.0, 2, 48000)));
