@@ -984,6 +984,10 @@ c2_status_t C2SoftAvcDec::drainInternal(
     }
 
     if (OK != setFlushMode()) return C2_CORRUPTED;
+    if(!work){
+        ALOGW("drain with NULL work");
+        return C2_BAD_VALUE;
+    }
     while (true) {
         if (C2_OK != ensureDecoderState(pool)) {
             mSignalledError = true;
