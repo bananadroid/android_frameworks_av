@@ -475,7 +475,18 @@ aom_codec_err_t C2SoftAomEnc::setupCodecParameters() {
 BailOut:
     return codec_return;
 }
-
+static int GetCPUCoreCount() {
+    int cpuCoreCount = 1;
+#if defined(_SC_NPROCESSORS_ONLN)
+    cpuCoreCount = sysconf(_SC_NPROCESSORS_ONLN);
+#else
+    // _SC_NPROC_ONLN must be defined...
+    cpuCoreCount = sysconf(_SC_NPROC_ONLN);
+#endif
+    CHECK(cpuCoreCount >= 1);
+    ALOGV("Number of CPU cores: %d", cpuCoreCount);
+    return cpuCoreCount;
+}
 status_t C2SoftAomEnc::initEncoder() {
     aom_codec_err_t codec_return;
     status_t result = UNKNOWN_ERROR;
@@ -530,8 +541,8 @@ status_t C2SoftAomEnc::initEncoder() {
     mCodecConfiguration->g_bit_depth = mIs10Bit ? AOM_BITS_10 : AOM_BITS_8;
     mCodecConfiguration->g_input_bit_depth = mIs10Bit ? 10 : 8;
 
+    mCodecConfiguration->g_threads = GetCPUCoreCount();
 
-    mCodecConfiguration->g_threads = 0;
     mCodecConfiguration->g_error_resilient = 0;
 
     // timebase unit is microsecond
