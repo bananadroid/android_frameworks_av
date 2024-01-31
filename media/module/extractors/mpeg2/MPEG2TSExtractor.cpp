@@ -361,7 +361,12 @@ void MPEG2TSExtractor::init() {
 
             if (impl != NULL) {
                 sp<MetaData> format = impl->getFormat();
-                if (format != NULL) {
+                // Nuplayer and MediaScanner assume video track has height and width.
+                // It will cause mediaserver crash if these two attributes are absent.
+                int32_t height = -1;
+                int32_t width = -1;
+                if (format != NULL && format->findInt32(kKeyHeight, &height)
+                    && format->findInt32(kKeyWidth, &width)) {
                     haveVideo = true;
                     addSource(impl);
                     if (!isScrambledFormat(*(format.get()))) {
