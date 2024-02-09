@@ -424,7 +424,6 @@ public:
     /// Specialization for an input port parameter.
     struct input : public T, public S,
             public _C2StructCheck<S, ParamIndex, T::PARAM_KIND | T::Index::DIR_INPUT> {
-        using T::operator!=;
         _C2_CORE_INDEX_OVERRIDE(ParamIndex)
         /// Wrapper around base structure's constructor.
         template<typename ...Args>
@@ -438,7 +437,6 @@ public:
     /// Specialization for an output port parameter.
     struct output : public T, public S,
             public _C2StructCheck<S, ParamIndex, T::PARAM_KIND | T::Index::DIR_OUTPUT> {
-        using T::operator!=;
         _C2_CORE_INDEX_OVERRIDE(ParamIndex)
         /// Wrapper around base structure's constructor.
         template<typename ...Args>
@@ -494,7 +492,6 @@ public:
     /// Specialization for an input port parameter.
     struct input : public T,
             public _C2FlexStructCheck<S, ParamIndex, T::PARAM_KIND | T::Index::DIR_INPUT> {
-        using T::operator!=;
     private:
         /// Wrapper around base structure's constructor while also specifying port/direction.
         template<typename ...Args>
@@ -512,7 +509,6 @@ public:
     /// Specialization for an output port parameter.
     struct output : public T,
             public _C2FlexStructCheck<S, ParamIndex, T::PARAM_KIND | T::Index::DIR_OUTPUT> {
-        using T::operator!=;
     private:
         /// Wrapper around base structure's constructor while also specifying port/direction.
         template<typename ...Args>
@@ -577,7 +573,6 @@ public:
     struct input : public T, public S,
             public _C2StructCheck<S, ParamIndex,
                     T::PARAM_KIND | T::Index::IS_STREAM_FLAG | T::Type::DIR_INPUT> {
-        using T::operator!=;
         _C2_CORE_INDEX_OVERRIDE(ParamIndex)
 
         /// Default constructor. Stream-ID is undefined.
@@ -597,7 +592,6 @@ public:
     struct output : public T, public S,
             public _C2StructCheck<S, ParamIndex,
                     T::PARAM_KIND | T::Index::IS_STREAM_FLAG | T::Type::DIR_OUTPUT> {
-        using T::operator!=;
         _C2_CORE_INDEX_OVERRIDE(ParamIndex)
 
         /// Default constructor. Stream-ID is undefined.
@@ -666,7 +660,6 @@ public:
     struct input : public T,
             public _C2FlexStructCheck<S, ParamIndex,
                     T::PARAM_KIND | T::Index::IS_STREAM_FLAG | T::Type::DIR_INPUT> {
-        using T::operator!=;
     private:
         /// Default constructor. Stream-ID is undefined.
         inline input(size_t flexCount) : T(_Type::CalcSize(flexCount), input::PARAM_TYPE) { }
@@ -690,7 +683,6 @@ public:
     struct output : public T,
             public _C2FlexStructCheck<S, ParamIndex,
                     T::PARAM_KIND | T::Index::IS_STREAM_FLAG | T::Type::DIR_OUTPUT> {
-        using T::operator!=;
     private:
         /// Default constructor. Stream-ID is undefined.
         inline output(size_t flexCount) : T(_Type::CalcSize(flexCount), output::PARAM_TYPE) { }
