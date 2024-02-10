@@ -497,7 +497,7 @@ void NuPlayer::Decoder::onResume(bool notifyComplete) {
 
     if (mFormat != NULL) {
         nsecs_t deltaTime = systemTime() - mMsgTime;
-        ALOGD("rsme - flus deltaTime: %lld", deltaTime);
+        //ALOGD("rsme - flus deltaTime: %lld", deltaTime);
         if (deltaTime < 5 * 1000000LL) {
             ALOGD("handleOutputFormatChange again after resume");
             handleOutputFormatChange(mFormat);
