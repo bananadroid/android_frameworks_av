@@ -347,13 +347,23 @@ bool AudioPolicyMixCollection::mixMatch(const AudioMix* mix, size_t mixIndex,
     uid_t uid, audio_session_t session) {
 
     if (mix->mMixType == MIX_TYPE_PLAYERS) {
+        auto hasFlag = [](auto flags, auto flag) { return (flags & flag) == flag; };
         // Permit match only if requested format and mix format are PCM and can be format
         // adapted by the mixer, or are the same (compressed) format.
-        if (!is_mix_loopback(mix->mRouteFlags) &&
-            !((audio_is_linear_pcm(config.format) && audio_is_linear_pcm(mix->mFormat.format)) ||
-              (config.format == mix->mFormat.format)) &&
-              config.format != AUDIO_CONFIG_BASE_INITIALIZER.format) {
-            return false;
+        if (!is_mix_loopback(mix->mRouteFlags)) {
+            if (hasFlag(attributes.flags, AUDIO_OUTPUT_FLAG_COMPRESS_OFFLOAD) ||
+                hasFlag(attributes.flags, AUDIO_OUTPUT_FLAG_HW_AV_SYNC)) {
+                if (!(config.format == mix->mFormat.format) &&
+                        config.format != AUDIO_CONFIG_BASE_INITIALIZER.format) {
+                    return false;
+                }
+            } else {
+                if (!(audio_is_linear_pcm(config.format) &&
+                      audio_is_linear_pcm(mix->mFormat.format)) &&
+                        config.format != AUDIO_CONFIG_BASE_INITIALIZER.format) {
+                    return false;
+                }
+            }
         }
 
         // if there is an address match, prioritize that match
